@@ -1,0 +1,508 @@
+
+<!--
+  Kombitage-Rechner
+  Entwickelt von Krisztián
+  Gebaut mit Claude (Anthropic) · 2025
+-->
+<link href="https://cdn.jsdelivr.net/npm/@fontsource/dm-sans@5.0.14/index.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@fontsource/dm-mono@5.0.14/index.css" rel="stylesheet">
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #f2efe9; transition: background .3s; }
+body.dark { background: #111009; }
+
+.shell {
+  --bg:#f2efe9; --card:#ffffff; --border:#ddd8d0; --border-strong:#c8c2b8;
+  --text:#1a1814; --muted:#7a746c; --subtle:#b0a89e;
+  --amber:#c47d0e; --amber-bg:#fef3dc; --amber-border:#e8a825;
+  --blue:#1a5fa8; --blue-bg:#deeaf8; --blue-border:#4a8fd4;
+  --green:#2d7a3a; --green-bg:#e0f2e4; --green-border:#5aaa68;
+  --red:#b83232; --red-bg:#fce8e8; --red-border:#e06060;
+  --hdr:#1a1814; --hdr-sub:#857f78;
+  --font:'DM Sans',system-ui,sans-serif; --mono:'DM Mono','Courier New',monospace;
+  --radius:10px; --radius-sm:6px;
+  background:var(--bg); border-radius:16px; overflow:hidden;
+  font-family:var(--font); color:var(--text); transition: background .3s, color .3s;
+}
+.shell.dark {
+  --bg:#1c1916; --card:#252118; --border:#38332c; --border-strong:#504840;
+  --text:#ede8e0; --muted:#9a9088; --subtle:#68605a;
+  --amber:#e8a825; --amber-bg:#2c2008; --amber-border:#7a5510;
+  --blue:#5090d8; --blue-bg:#0c1e34; --blue-border:#1e4878;
+  --green:#5ab868; --green-bg:#0c2210; --green-border:#1e5228;
+  --red:#e06868; --red-bg:#2c0e0e; --red-border:#602020;
+  --hdr:#111009; --hdr-sub:#6a6058;
+}
+
+.hdr { background:var(--hdr); padding:18px 24px; display:flex; align-items:center; justify-content:space-between; }
+.hdr-left { display:flex; align-items:baseline; gap:12px; }
+.hdr-title { font-size:20px; font-weight:600; color:#fff; letter-spacing:-0.3px; }
+.hdr-title span { color:#e8a825; }
+.hdr-sub { font-size:12px; color:var(--hdr-sub); }
+
+.theme-btn {
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+  border-radius:8px; cursor:pointer; padding:6px 10px;
+  display:flex; align-items:center; gap:6px;
+  font-family:var(--font); font-size:12px; font-weight:500; color:rgba(255,255,255,0.7);
+  transition: all .2s;
+}
+.theme-btn:hover { background:rgba(255,255,255,0.14); color:#fff; }
+
+.body { padding:18px; }
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; margin-bottom:10px; transition:background .3s,border-color .3s; }
+.card-label { font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+.fld-label { font-size:11px; font-weight:500; color:var(--muted); margin-bottom:5px; display:block; }
+.t-input { width:100%; background:var(--bg); border:1px solid var(--border-strong); border-radius:var(--radius-sm); color:var(--text); font-family:var(--mono); font-size:22px; padding:9px 12px; outline:none; letter-spacing:.05em; transition:border-color .15s,background .3s,color .3s; }
+.t-input::placeholder { color:var(--subtle); font-size:18px; }
+.t-input:focus { border-color:var(--amber); }
+.t-input.err { border-color:var(--red); }
+.toggle { display:flex; border-radius:var(--radius-sm); overflow:hidden; border:1px solid var(--border-strong); }
+.tbtn { flex:1; padding:9px 6px; border:none; cursor:pointer; font-family:var(--font); font-size:13px; font-weight:500; transition:all .15s; display:flex; align-items:center; justify-content:center; gap:5px; }
+.tbtn+.tbtn { border-left:1px solid var(--border-strong); }
+.tbtn.off { background:var(--bg); color:var(--muted); }
+.tbtn.on-amber { background:var(--amber); color:#fff; }
+.tbtn.on-blue { background:var(--blue); color:#fff; }
+.add-btn { width:100%; padding:11px; background:transparent; border:1.5px dashed var(--border-strong); color:var(--muted); cursor:pointer; font-family:var(--font); font-size:13px; border-radius:var(--radius); margin-bottom:10px; transition:all .15s; font-weight:500; }
+.add-btn:hover { border-color:var(--amber); color:var(--amber); }
+.del-btn { background:none; border:none; color:var(--subtle); cursor:pointer; font-size:15px; padding:2px 6px; border-radius:4px; transition:all .15s; line-height:1; }
+.del-btn:hover { background:var(--red-bg); color:var(--red); }
+.stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px; }
+.stat { background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 14px; transition:all .2s; }
+.stat.active-amber { background:var(--amber-bg); border-color:var(--amber-border); }
+.stat.active-blue  { background:var(--blue-bg);  border-color:var(--blue-border); }
+.stat-lbl { font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:4px; }
+.stat-val { font-family:var(--mono); font-size:18px; font-weight:600; }
+.stat-pct { font-size:11px; color:var(--subtle); margin-top:3px; }
+.live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; flex-shrink:0; }
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.bar-wrap { margin-bottom:12px; }
+.bar-track { height:6px; background:var(--border); border-radius:3px; overflow:hidden; position:relative; }
+.bar-fill { height:100%; border-radius:3px; transition:width .4s; }
+.bar-mark { position:absolute; left:51%; top:0; width:2px; height:100%; background:var(--amber); opacity:.7; }
+.bar-labels { display:flex; justify-content:space-between; font-size:10px; color:var(--subtle); margin-top:4px; }
+.bar-labels span:nth-child(2) { color:var(--amber); font-weight:500; }
+.status-box { border-radius:var(--radius); padding:16px 20px; margin-bottom:10px; text-align:center; border:1.5px solid; }
+.status-title { font-size:20px; font-weight:700; letter-spacing:-0.3px; }
+.status-sub { font-size:12px; margin-top:4px; font-weight:500; }
+.plan-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.pbox { border-radius:var(--radius-sm); padding:14px 16px; border:1px solid; }
+.pbox-lbl { font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; }
+.pbox-time { font-family:var(--mono); font-size:28px; font-weight:600; line-height:1; }
+.pbox-sub { font-size:11px; margin-top:5px; font-weight:500; }
+.pendel-note { font-size:12px; padding:8px 12px; border-radius:var(--radius-sm); border-left:3px solid var(--amber-border); background:var(--amber-bg); color:var(--amber); font-weight:500; }
+.kombi-row { display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:12px; margin-top:4px; font-size:13px; }
+.warn-box { background:var(--red-bg); border:1px solid var(--red-border); border-radius:var(--radius-sm); padding:10px 14px; font-size:13px; font-weight:500; color:var(--red); margin-bottom:12px; }
+.live-panel { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px; display:flex; flex-direction:column; justify-content:center; transition:background .3s; height:100%; }
+.lp-lbl { font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.lp-badge { font-size:18px; font-weight:700; }
+.lp-sub { font-size:12px; font-weight:500; margin-top:3px; }
+.lp-bar { height:4px; background:var(--border); border-radius:2px; overflow:hidden; position:relative; margin-top:10px; }
+.lp-fill { height:100%; border-radius:2px; transition:width .4s; }
+.lp-mark { position:absolute; left:51%; top:0; width:1.5px; height:100%; background:var(--amber); opacity:.8; }
+.lp-pct { font-size:10px; color:var(--subtle); margin-top:3px; }
+.gz-panel { background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 16px; display:flex; flex-direction:column; justify-content:center; transition:background .3s; height:100%; }
+.gz-lbl { font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; display:flex; align-items:center; gap:5px; }
+.gz-val { font-family:var(--mono); font-size:22px; font-weight:600; line-height:1; }
+.gz-sub { font-size:11px; font-weight:500; margin-top:4px; }
+</style>
+
+<div id="root"></div>
+
+<script>
+const NORMAL_DAY=492, SOLL=462, NORM_BURO=Math.ceil(SOLL*0.51); // NORM_BURO=236
+let darkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+if(darkMode) document.body.classList.add('dark');
+
+function nowMin(){const n=new Date();return n.getHours()*60+n.getMinutes();}
+function toMin(t){if(!t)return null;const m=t.trim().match(/^(\d{1,2}):(\d{2})$/);if(!m)return null;const h=+m[1],mn=+m[2];if(h>23||mn>59)return null;return h*60+mn;}
+function fmt(t){if(!t)return '';const clean=t.trim();// "6" or "18" → "06:00" / "18:00"
+  if(/^\d{1,2}$/.test(clean)){const h=+clean;if(h>=0&&h<=23)return String(h).padStart(2,'0')+':00';}
+  const m=clean.match(/^(\d{1,2}):?(\d{2})$/);if(!m)return clean;const h=+m[1],mn=+m[2];if(h>23||mn>59)return clean;return String(h).padStart(2,'0')+':'+String(mn).padStart(2,'0');}
+function toTime(min){if(min==null||isNaN(min))return '--:--';min=Math.round(((min%1440)+1440)%1440);return String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0');}
+function dur(min){if(min==null||isNaN(min))return '--';min=Math.round(Math.max(0,min));const h=Math.floor(min/60),m=min%60;return h?(m?h+'h '+m+'min':h+' Std'):m+' Min';}
+function alt(l){return l==='buro'?'heim':'buro';}
+
+let state={startTime:'',startLoc:'buro',events:[],endTime:''};
+let timerID=null;
+
+function calc(s){
+  const s0=toMin(s.startTime);
+  if(s0==null)return null;
+  const segs=[],gaps=[];
+  let loc=s.startLoc,cur=s0,ok=true;
+  for(let i=0;i<s.events.length&&ok;i++){
+    const ev=s.events[i];
+    const ausMin=toMin(ev.aus);
+    if(!ausMin||ausMin<=cur){ok=false;break;}
+    segs.push({s:cur,e:ausMin,loc});
+    const einMin=toMin(ev.ein);
+    const gd=einMin!=null?einMin-ausMin:null;
+    const inW=ausMin>=600&&ausMin<840;
+    // up to 30 min in 10-14 window counts as pause; rest = nowhere
+    const inWPause=(gd!=null&&gd>0&&inW)?Math.min(gd,30):0;
+    const excess=(gd!=null&&gd>0&&inW)?Math.max(0,gd-30):0;
+    // "nirgendwo": in-window excess ODER komplette out-of-window Unterbrechung
+    const nirgendwo=inW?excess:(gd!=null&&gd>0?gd:0);
+    gaps.push({s:ausMin,e:einMin,gd,inW,inWPause,excess,nirgendwo,type:ev.type,loc});
+    if(!einMin||gd<=0){ok=false;break;}
+    if(ev.type==='switch')loc=alt(loc);
+    cur=einMin;
+  }
+  const hasEnd=toMin(s.endTime)!=null&&toMin(s.endTime)>s0;
+  const liveNow=nowMin();
+  const finalEnd=hasEnd?toMin(s.endTime):liveNow;
+  if(ok)segs.push({s:cur,e:finalEnd,loc,final:true});
+  let buro=0,heim=0,inWPauseTotal=0,excessTotal=0;
+  for(const sg of segs)if(sg.e!=null){const d=sg.e-sg.s;if(d>0)sg.loc==='buro'?buro+=d:heim+=d;}
+  for(const g of gaps){inWPauseTotal+=g.inWPause;excessTotal+=g.nirgendwo;}
+  // ── Change 1: Pendelzeit/Unterbrechung als Teil der Pflichtpause ──────
+  // rawAnw = reine Anwesenheit (kein Pendel/Unterbrechungszeit)
+  // inWPauseTotal füllt die 30 Min Pflichtpause; Rest wird von Arbeitszeit abgezogen
+  const rawAnw=buro+heim;
+  const grossAnw=rawAnw+inWPauseTotal;
+  const needPause=grossAnw>360;
+  const pauseFromWork=needPause?Math.max(0,30-inWPauseTotal):0;
+  const nettoAZ=rawAnw-pauseFromWork;
+  const pct=nettoAZ>0?buro/nettoAZ*100:null;
+  const isBurotag=pct!=null&&heim===0;
+  const isKombi=pct!=null&&!isBurotag&&parseFloat(pct.toFixed(1))>=51;
+  // ── Change 2: normEnde + Überschuss über 30 Min ───────────────────────
+  const normEnde=toTime(s0+NORMAL_DAY+excessTotal);
+  const fin=segs[segs.length-1];
+  let fruh=null,buroBedarf=0,normHeimLeft=0;
+  if(!hasEnd&&fin?.loc==='buro'){
+    const minBuro=Math.max(NORM_BURO,heim>0?Math.ceil(heim*51/49):0);
+    buroBedarf=Math.max(0,minBuro-buro);
+    fruh=toTime(Math.max(fin.s,liveNow)+buroBedarf);
+    normHeimLeft=Math.max(0,SOLL-(buro+buroBedarf)-heim);
+  }
+  let maxHeimRem=null,spat=null;
+  if(!hasEnd&&fin?.loc==='heim'&&buro>0){
+    maxHeimRem=Math.max(0,Math.floor(buro*49/51)-heim);
+    spat=toTime(liveNow+maxHeimRem);
+  }
+  const spatBuroMin=s0+NORMAL_DAY+excessTotal-NORM_BURO;
+  const spatBuro=(!hasEnd&&fin?.loc==='heim'&&buro===0)?toTime(spatBuroMin):null;
+  const spatBuroRem=spatBuro?Math.max(0,spatBuroMin-liveNow):null;
+  const tooLate=spatBuro?liveNow>spatBuroMin:false;
+  // ── Gleitzeitkonto ───────────────────────────────────────────────────
+  const gzJetzt=nettoAZ-SOLL;
+  return{segs,gaps,buro,heim,rawAnw,inWPauseTotal,excessTotal,pauseFromWork,nettoAZ,
+    pct,isBurotag,isKombi,hasEnd,fin,ok,fruh,buroBedarf,normEnde,normHeimLeft,
+    maxHeimRem,spat,spatBuro,spatBuroRem,tooLate,gzJetzt,s0,liveNow};
+}
+
+function bIco(c='currentColor'){return `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><rect x="1" y="4" width="14" height="11" rx="1" stroke="${c}" stroke-width="1.5"/><rect x="5" y="9" width="3" height="6" fill="${c}" rx="0.5"/><rect x="9" y="6" width="2" height="2" fill="${c}" rx="0.3"/><path d="M0 5L8 1L16 5" stroke="${c}" stroke-width="1.5"/></svg>`;}
+function hIco(c='currentColor'){return `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" style="flex-shrink:0"><rect x="2" y="6" width="12" height="9" rx="1" stroke="${c}" stroke-width="1.5"/><path d="M0 7L8 2L16 7" stroke="${c}" stroke-width="1.5"/><rect x="6" y="10" width="4" height="5" fill="${c}" rx="0.5"/></svg>`;}
+function sunIco(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;}
+function moonIco(){return `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;}
+
+function tgl(sel){return `<div class="toggle">
+  <button id="btn-buro" class="tbtn ${sel==='buro'?'on-amber':'off'}" onclick="setLoc('buro')">${bIco(sel==='buro'?'#fff':'var(--muted)')} Büro</button>
+  <button id="btn-heim" class="tbtn ${sel==='heim'?'on-blue':'off'}" onclick="setLoc('heim')">${hIco(sel==='heim'?'#fff':'var(--muted)')} Heim</button>
+</div>`;}
+function tfld(id,val,ph){const v=fmt(val)||val;const e=v&&!toMin(v)?' err':'';return `<input class="t-input${e}" id="${id}" type="text" inputmode="numeric" maxlength="5" placeholder="${ph}" value="${v}" autocomplete="off" onchange="onTChange('${id}',this.value)">`;}
+
+function pbox(label,time,sub,amber){
+  const bg=amber?'var(--amber-bg)':'var(--blue-bg)',brd=amber?'var(--amber-border)':'var(--blue-border)',tc=amber?'var(--amber)':'var(--blue)';
+  return `<div class="pbox" style="background:${bg};border-color:${brd};"><div class="pbox-lbl" style="color:${tc};">${label}</div><div class="pbox-time" style="color:${tc};">${time}</div>${sub?`<div class="pbox-sub" style="color:${tc};">${sub}</div>`:''}</div>`;
+}
+
+function buildLiveStatus(c){
+  if(!c||c.pct==null)return `<div class="live-panel"><div class="lp-lbl">Status</div><div style="font-size:13px;color:var(--subtle);">Wartet auf Daten…</div></div>`;
+  const pct=c.pct;
+  let col,badge,sub;
+  if(c.isBurotag){col='var(--green)';badge='✓ Bürotag';sub='100 % Büroanteil';}
+  else if(c.isKombi){
+    col='var(--green)';badge='✓ Kombitage';
+    if(!c.hasEnd&&c.fin?.loc==='buro'&&c.fruh)sub=`Frühestens nach Hause: ${c.fruh}`;
+    else if(!c.hasEnd&&c.fin?.loc==='heim'&&c.spat)sub=`Heim bis: ${c.spat}`;
+    else sub=`${pct.toFixed(1)} % Büroanteil`;
+  } else {
+    col='var(--red)';badge='✗ Telearbeit';
+    if(!c.hasEnd&&c.fin?.loc==='buro'&&c.buroBedarf>0)sub=`noch ${dur(c.buroBedarf)} im Büro → Kombitag`;
+    else if(!c.hasEnd&&c.spatBuro&&!c.tooLate)sub=`spätestens ${c.spatBuro} ins Büro`;
+    else sub=`${pct.toFixed(1)} % Büroanteil`;
+  }
+  const barCol=c.isKombi||c.isBurotag?'var(--green)':pct>=35?'var(--amber)':'var(--red)';
+  return `<div class="live-panel">
+    <div class="lp-lbl">Status${!c.hasEnd?` <span class="live-dot"></span>`:''}</div>
+    <div class="lp-badge" style="color:${col};">${badge}</div>
+    <div class="lp-sub" style="color:${col};">${sub}</div>
+    <div class="lp-bar"><div class="lp-fill" style="width:${Math.min(100,pct)}%;background:${barCol};"></div><div class="lp-mark"></div></div>
+    <div class="lp-pct">${pct.toFixed(1)} % Büroanteil</div>
+  </div>`;
+}
+
+function durGZ(min){
+  const sign=min>=0?'+':'−';
+  const abs=Math.abs(Math.round(min));
+  const h=Math.floor(abs/60),m=abs%60;
+  const d=h?(m?h+'h '+m+'min':h+' Std'):m+' Min';
+  return sign+' '+d;
+}
+
+function buildGleitzeit(c){
+  if(!c||!toMin(state.startTime))return `<div class="gz-panel"><div class="gz-lbl">Gleitzeitkonto</div><div style="font-size:13px;color:var(--subtle);">Wartet auf Daten…</div></div>`;
+  const gz=c.gzJetzt;
+  const col=gz>=0?'var(--green)':Math.abs(gz)<60?'var(--amber)':'var(--red)';
+  let sub;
+  if(c.hasEnd){
+    sub=gz>=0?'Heute auf dem Konto':'Heute vom Konto';
+  } else {
+    sub=gz>=0?'wenn du jetzt aufhörst (auf Konto)':'wenn du jetzt aufhörst (vom Konto)';
+  }
+  return `<div class="gz-panel">
+    <div class="gz-lbl">Gleitzeitkonto${!c.hasEnd?` <span class="live-dot"></span>`:''}</div>
+    <div class="gz-val" style="color:${col};">${durGZ(gz)}</div>
+    <div class="gz-sub" style="color:${col};">${sub}</div>
+  </div>`;
+}
+
+function buildResults(c){
+  if(!c||!toMin(state.startTime))return '';
+  const pctFmt=c.pct!=null?c.pct.toFixed(1)+'%':null;
+  const barPct=c.pct!=null?Math.min(100,c.pct):0;
+  const barCol=c.pct!=null?(c.pct>=51?'var(--green)':c.pct>=35?'var(--amber)':'var(--red)'):'var(--border)';
+  const bA=!c.hasEnd&&c.fin?.loc==='buro',hA=!c.hasEnd&&c.fin?.loc==='heim';
+
+  const totalPause=c.inWPauseTotal+c.pauseFromWork;
+
+  const stats=`<div class="stats" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat ${bA?'active-amber':''}">
+      <div class="stat-lbl" style="color:${bA?'var(--amber)':'var(--muted)'};">${bIco(bA?'var(--amber)':'var(--muted)')} Büro${bA?'<span class="live-dot"></span>':''}</div>
+      <div class="stat-val" style="color:var(--amber);">${dur(c.buro)}</div>
+      ${pctFmt?`<div class="stat-pct" style="color:${bA?'var(--amber)':'var(--subtle)'};">${pctFmt}</div>`:''}
+    </div>
+    <div class="stat ${hA?'active-blue':''}">
+      <div class="stat-lbl" style="color:${hA?'var(--blue)':'var(--muted)'};">${hIco(hA?'var(--blue)':'var(--muted)')} Heim${hA?'<span class="live-dot"></span>':''}</div>
+      <div class="stat-val" style="color:var(--blue);">${dur(c.heim)}</div>
+      ${pctFmt&&!c.isBurotag?`<div class="stat-pct" style="color:${hA?'var(--blue)':'var(--subtle)'};">${(100-c.pct).toFixed(1)}%</div>`:''}
+    </div>
+    <div class="stat">
+      <div class="stat-lbl" style="color:var(--muted);">${!c.hasEnd?`<span class="live-dot"></span> Live ${toTime(c.liveNow)}`:'Anwesenheit'}</div>
+      <div class="stat-val" style="color:var(--text);">${dur(c.rawAnw)}</div>
+      ${c.hasEnd?'':`<div class="stat-pct">Anwesenheit</div>`}
+    </div>
+    <div class="stat">
+      <div class="stat-lbl" style="color:var(--muted);">Nettoarbeitszeit</div>
+      <div class="stat-val" style="color:var(--green);">${dur(c.nettoAZ)}</div>
+      <div class="stat-pct">${totalPause>0?`− ${totalPause} Min Pause`:'ohne Pause'}</div>
+    </div>
+  </div>`;
+
+  // Pause-Aufschlüsselung wenn Pendel/Unterbrechung vorhanden
+  const pauseNote=c.inWPauseTotal>0?`<div class="pendel-note" style="margin-bottom:10px;">Pause: ${dur(c.inWPauseTotal)} Pendel/Unterbr. + ${dur(c.pauseFromWork)} Abzug = ${dur(totalPause)} gesamt</div>`:'';
+  const bar=c.pct!=null?`<div class="bar-wrap"><div class="bar-track"><div class="bar-fill" style="width:${barPct}%;background:${barCol};"></div><div class="bar-mark"></div></div><div class="bar-labels"><span>0 %</span><span>51 % Mindest</span><span>100 %</span></div></div>`:'';
+
+  let status='';
+  if(c.hasEnd&&c.pct!=null){
+    let bg,brd,col,title,msg;
+    if(c.isBurotag){bg='var(--green-bg)';brd='var(--green-border)';col='var(--green)';title='✓ Bürotag';msg='100 % Büroanteil — kein Tag vom Kontingent';}
+    else if(c.isKombi){bg='var(--green-bg)';brd='var(--green-border)';col='var(--green)';title='✓ Kombitage';msg=pctFmt+' Büroanteil — kein Tag vom Kontingent';}
+    else{bg='var(--red-bg)';brd='var(--red-border)';col='var(--red)';title='✗ Telearbeit';msg='Nur '+pctFmt+' im Büro — 1 Tag vom Kontingent';}
+    status=`<div class="status-box" style="background:${bg};border-color:${brd};"><div class="status-title" style="color:${col};">${title}</div><div class="status-sub" style="color:${col};">${msg}</div></div>`;
+  }
+
+  let plan='';
+  if(!c.hasEnd&&c.fin?.loc==='buro'){
+    const done=c.buroBedarf===0;
+    plan=`<div class="card"><div class="card-label">Planung · im Büro</div>
+      <div class="plan-grid">
+        ${pbox('Frühestens nach Hause',c.fruh,done?'51 % erreicht — Kombitag gesichert':`noch ${dur(c.buroBedarf)} im Büro nötig`,true)}
+        ${pbox('Normaltag Ende · 8h 12min',c.normEnde,'Startzeit + 8 Std 12 Min',false)}
+      </div>
+      ${c.normHeimLeft>0?`<div class="kombi-row"><span style="color:var(--muted);font-size:13px;">Kombitag danach möglich</span><span style="color:var(--blue);font-family:var(--mono);font-weight:600;">${dur(c.normHeimLeft)}</span></div>`:''}
+    </div>`;
+  }
+  if(!c.hasEnd&&c.fin?.loc==='heim'&&c.buro>0){
+    plan=`<div class="card"><div class="card-label">Planung · im Heim</div>
+      <div class="plan-grid">
+        <div class="pbox" style="background:var(--amber-bg);border-color:var(--amber-border);">
+          <div class="pbox-lbl" style="color:var(--amber);">Spätestens ausstempeln</div>
+          <div class="pbox-time" style="color:var(--amber);">${c.spat}</div>
+          <div class="pbox-sub" style="color:var(--amber);">${c.maxHeimRem===0?'Limit erreicht':'Noch '+dur(c.maxHeimRem)+' möglich'}</div>
+        </div>
+        ${pbox('Normaltag Ende · 8h 12min',c.normEnde,'Startzeit + 8 Std 12 Min',false)}
+      </div>
+    </div>`;
+  }
+  if(!c.hasEnd&&c.fin?.loc==='heim'&&c.buro===0){
+    const warn=c.tooLate?`<div class="warn-box">Zu spät für Kombitage beim Normaltag — mehr als 4h bereits im Heim.</div>`:'';
+    const subTxt=c.tooLate?'Frist überschritten':`in ${dur(c.spatBuroRem)} · noch ${dur(NORM_BURO)} Büro nötig`;
+    plan=`<div class="card"><div class="card-label">Planung · im Heim gestartet</div>
+      ${warn}
+      <div class="plan-grid${c.tooLate?' single':''}">
+        ${!c.tooLate?`<div class="pbox" style="background:var(--amber-bg);border-color:var(--amber-border);">
+          <div class="pbox-lbl" style="color:var(--amber);">Spätestens ins Büro</div>
+          <div class="pbox-time" style="color:var(--amber);">${c.spatBuro}</div>
+          <div class="pbox-sub" style="color:var(--amber);">${subTxt}</div>
+        </div>`:''}
+        ${pbox('Normaltag Ende · 8h 12min',c.normEnde,'Startzeit + 8 Std 12 Min',false)}
+      </div>
+    </div>`;
+  }
+  return `${stats}${pauseNote}${bar}${status}${plan}`;
+}
+
+function onTChange(id,raw){
+  const val=fmt(raw)||raw;
+  if(id==='startTime')state={...state,startTime:val};
+  else if(id==='endTime')state={...state,endTime:val};
+  else{const m=id.match(/^ev_(aus|ein)_(\d+)$/);if(m){const evs=[...state.events];evs[+m[2]]={...evs[+m[2]],[m[1]]:val};state={...state,events:evs};}}
+  renderAll();
+  const el=document.getElementById(id);if(el)el.value=val;
+  startTimer();
+}
+
+function renderAll(){
+  const c=calc(state);
+  const started=toMin(state.startTime)!=null;
+  document.getElementById('end-section').style.display=started?'block':'none';
+  document.getElementById('add-btn-wrap').style.display=started?'block':'none';
+  const errEl=document.getElementById('start-error');
+  if(errEl) errEl.textContent=(state.startTime&&!toMin(state.startTime))?'⚠ Ungültige Zeit — bitte im Format HH:MM eingeben':'';
+  const endErrEl=document.getElementById('end-error');
+  if(endErrEl){
+    const et=toMin(state.endTime), st=toMin(state.startTime);
+    if(state.endTime&&!et) endErrEl.textContent='⚠ Ungültige Zeit — bitte im Format HH:MM eingeben';
+    else if(et&&st&&et<=st) endErrEl.textContent='⚠ Endzeit muss nach der Startzeit liegen';
+    else endErrEl.textContent='';
+  }
+  const ls=document.getElementById('live-status');
+  if(ls)ls.innerHTML=started?buildLiveStatus(c):'';
+  const gz=document.getElementById('gleitzeit-panel');
+  if(gz)gz.innerHTML=started?buildGleitzeit(c):'';
+  document.getElementById('results').innerHTML=buildResults(c);
+}
+
+function startTimer(){
+  if(timerID)clearInterval(timerID);
+  if(toMin(state.startTime)&&!toMin(state.endTime))
+    timerID=setInterval(renderAll,30000);
+}
+
+function renderEvents(){
+  let loc=state.startLoc,swCount=0,brCount=0;
+  document.getElementById('events').innerHTML=state.events.map((ev,i)=>{
+    const fromLoc=loc;
+    if(ev.type==='switch'){loc=alt(loc);swCount++;}else{brCount++;}
+    const toLoc=ev.type==='switch'?loc:fromLoc;
+    const ausMin=toMin(ev.aus),einMin=toMin(ev.ein);
+    const gd=(ausMin&&einMin)?einMin-ausMin:null;
+    const inW=ausMin?ausMin>=600&&ausMin<840:false;
+    const inWPause=(gd!=null&&gd>0&&inW)?Math.min(gd,30):0;
+    const excess=(gd!=null&&gd>0&&inW)?Math.max(0,gd-30):0;
+    let gapNote='';
+    if(inW&&gd!=null&&gd>0){
+      const typeLabel=ev.type==='switch'?'Pendelzeit':'Unterbrechung';
+      gapNote=`<div class="pendel-note" style="margin-top:10px;">${typeLabel}: ${dur(gd)} — ${dur(inWPause)} Pause${excess>0?' · '+dur(excess)+' zählt nirgendwo':''}</div>`;
+    }else if(gd!=null&&gd>0){
+      const typeLabel=ev.type==='switch'?'Pendelzeit':'Unterbrechung';
+      gapNote=`<div class="pendel-note" style="margin-top:10px;">${typeLabel}: ${dur(gd)} — zählt nirgendwo, Normaltag Ende +${dur(gd)}</div>`;
+    }
+    if(ev.type==='switch'){
+      return `<div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="card-label" style="margin:0;">Ortswechsel ${swCount} &nbsp;${fromLoc==='buro'?bIco('var(--amber)'):hIco('var(--blue)')} → ${toLoc==='buro'?bIco('var(--amber)'):hIco('var(--blue)')}</div>
+          <button class="del-btn" onclick="delEvent(${i})">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><label class="fld-label">Ausstempeln ${fromLoc==='buro'?'Büro':'Heim'}</label>${tfld('ev_aus_'+i,ev.aus,'07:30')}</div>
+          <div><label class="fld-label">Einstempeln ${toLoc==='buro'?'Büro':'Heim'}</label>${tfld('ev_ein_'+i,ev.ein,'08:00')}</div>
+        </div>${gapNote}
+      </div>`;
+    }else{
+      const locLabel=fromLoc==='buro'?'Büro':'Heim';
+      const locIco=fromLoc==='buro'?bIco('var(--amber)'):hIco('var(--blue)');
+      return `<div class="card" style="border-style:dashed;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="card-label" style="margin:0;">Unterbrechung ${brCount} &nbsp;${locIco} ↩ ${locIco}</div>
+          <button class="del-btn" onclick="delEvent(${i})">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><label class="fld-label">Ausstempeln ${locLabel}</label>${tfld('ev_aus_'+i,ev.aus,'12:00')}</div>
+          <div><label class="fld-label">Einstempeln ${locLabel}</label>${tfld('ev_ein_'+i,ev.ein,'12:30')}</div>
+        </div>${gapNote}
+      </div>`;
+    }
+  }).join('');
+}
+
+function toggleTheme(){
+  darkMode=!darkMode;
+  document.body.classList.toggle('dark',darkMode);
+  const shell=document.querySelector('.shell');
+  shell.classList.toggle('dark',darkMode);
+  const btn=document.getElementById('theme-btn');
+  if(btn)btn.innerHTML=(darkMode?sunIco()+' Hell':moonIco()+' Dunkel');
+}
+
+function fullRender(){
+  const s=state,started=toMin(s.startTime)!=null;
+  document.getElementById('root').innerHTML=`
+  <div class="shell${darkMode?' dark':''}">
+    <div class="hdr">
+      <div class="hdr-left">
+        <div class="hdr-title"><span>Kombi</span>tage</div>
+        <div class="hdr-sub">Arbeitszeitrechner</div>
+      </div>
+      <button id="theme-btn" class="theme-btn" onclick="toggleTheme()">
+        ${darkMode?sunIco()+' Hell':moonIco()+' Dunkel'}
+      </button>
+    </div>
+    <div class="body">
+      <div class="card">
+        <div class="card-label">Arbeitsbeginn</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label class="fld-label">Einstempeln</label>
+            ${tfld('startTime',s.startTime,'07:22')}
+            <div id="start-error" style="font-size:11px;color:var(--red);margin-top:5px;font-weight:500;min-height:16px;">
+              ${s.startTime && !toMin(s.startTime) ? '⚠ Ungültige Zeit — bitte im Format HH:MM eingeben' : ''}
+            </div>
+          </div>
+          <div><label class="fld-label">Startort</label>${tgl(s.startLoc)}</div>
+        </div>
+      </div>
+      <div id="events"></div>
+      <div id="add-btn-wrap" style="display:${started?'block':'none'};">
+        <button class="add-btn" onclick="addBreak()">+ Unterbrechung hinzufügen</button>
+        <button class="add-btn" onclick="addSw()">+ Ortswechsel hinzufügen</button>
+      </div>
+      <div id="end-section" style="display:${started?'block':'none'};">
+        <div class="card">
+          <div class="card-label">Arbeitsende <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--subtle);">(optional)</span></div>
+          <div style="display:grid;grid-template-columns:150px 1fr 1fr;gap:12px;align-items:stretch;">
+            <div style="display:flex;flex-direction:column;justify-content:flex-start;">
+              <label class="fld-label">Ausstempeln</label>${tfld('endTime',s.endTime,'16:00')}
+              <div id="end-error" style="font-size:11px;color:var(--red);margin-top:5px;font-weight:500;min-height:16px;"></div>
+            </div>
+            <div id="live-status" style="height:100%;">${started?buildLiveStatus(calc(s)):''}</div>
+            <div id="gleitzeit-panel" style="height:100%;">${started?buildGleitzeit(calc(s)):''}</div>
+          </div>
+        </div>
+      </div>
+      <div id="results"></div>
+    </div>
+  </div>`;
+  renderEvents();
+  renderAll();
+  startTimer();
+}
+
+function setLoc(l){
+  state={...state,startLoc:l};
+  const bb=document.getElementById('btn-buro'),bh=document.getElementById('btn-heim');
+  if(bb){bb.className='tbtn '+(l==='buro'?'on-amber':'off');bb.innerHTML=bIco(l==='buro'?'#fff':'var(--muted)')+' Büro';}
+  if(bh){bh.className='tbtn '+(l==='heim'?'on-blue':'off');bh.innerHTML=hIco(l==='heim'?'#fff':'var(--muted)')+' Heim';}
+  renderEvents();renderAll();
+}
+function addSw(){state={...state,events:[...state.events,{type:'switch',aus:'',ein:''}]};renderEvents();renderAll();}
+function addBreak(){state={...state,events:[...state.events,{type:'break',aus:'',ein:''}]};renderEvents();renderAll();}
+function delEvent(i){state={...state,events:state.events.filter((_,j)=>j!==i)};renderEvents();renderAll();}
+
+fullRender();
+</script>
