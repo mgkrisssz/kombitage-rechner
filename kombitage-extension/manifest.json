@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Kombitage",
+  "version": "1.1.0",
+  "description": "Kombitage-Arbeitszeitrechner mit read-only SAP Time Events Sync im Hintergrund.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://zkrcip010001.sap.intranet.zkw.at:44300/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://zkrcip010001.sap.intranet.zkw.at:44300/*"
+      ],
+      "js": [
+        "content-sap.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Kombitage öffnen"
+  },
+  "version_name": "v1.1.0"
+}
