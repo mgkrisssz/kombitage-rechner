@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kombitage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="kombi.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="shell">
+    <div class="hdr">
+      <div class="hdr-left">
+        <div class="hdr-title"><span>Kombi</span>tage</div>
+        <div class="hdr-sub">Arbeitszeitrechner</div>
+      </div>
+      <div class="hdr-right">
+        <button class="sap-btn" id="sapBtn">
+          <span class="dot"></span> SAP&nbsp;Sync <span class="cd" id="sapCd"></span>
+        </button>
+        <button class="icon-btn" id="setBtn" title="Einstellungen">&#9881;&#65039;</button>
+        <button class="icon-btn" id="themeBtn" title="Theme wechseln">&#127769;</button>
+      </div>
+    </div>
+
+    <div class="body">
+      <!-- ======= HAUPTANSICHT ======= -->
+      <div id="mainView">
+        <div class="datebar">
+          <div class="date-nav">
+            <button id="prevDay" title="Vorheriger Tag">&#8249;</button>
+            <div class="date-cur" id="dateCur">&mdash;</div>
+            <button id="nextDay" title="N&auml;chster Tag">&#8250;</button>
+          </div>
+          <button class="today-btn" id="todayBtn">Heute</button>
+          <span class="day-tag" id="dayTag"></span>
+        </div>
+
+        <div class="main-grid">
+        <div class="col-left">
+        <div class="card tl-card">
+          <div class="card-label">Tagesverlauf <span style="font-weight:500;text-transform:none;letter-spacing:0;color:var(--subtle)">&middot; Bl&ouml;cke ziehen, R&auml;nder greifen, einf&uuml;gen</span></div>
+          <div class="tl-wrap">
+            <div class="axis" id="axis"></div>
+            <div class="track" id="track"></div>
+          </div>
+          <div class="tl-actions">
+            <button class="add-btn buro" id="addBuro">&#127970; B&uuml;ro-Block</button>
+            <button class="add-btn heim" id="addHeim">&#127968; Heim-Block</button>
+            <button class="add-btn arzt" id="addArzt">&#129658; Arzt-Block</button>
+            <button class="ghost-btn" id="clearBtn">Leeren</button>
+          </div>
+          <div class="tl-hint" id="tlHint">SAP f&uuml;llt den Balken automatisch &mdash; danach frei nachjustieren.</div>
+        </div>
+
+        <div class="stats" id="stats"></div>
+
+        <div class="bar-wrap">
+          <div class="bar-track"><div class="bar-fill" id="barFill"></div><div class="bar-mark"></div></div>
+          <div class="bar-labels"><span>0 %</span><span class="mid" id="barMidLbl">51 % Mindest</span><span>100 %</span></div>
+        </div>
+
+        <div class="duo">
+          <div class="panel" id="statusPanel"></div>
+          <div class="panel" id="gzPanel"></div>
+        </div>
+
+        <div class="card" id="planCard"></div>
+        </div><!-- /col-left -->
+
+        <div class="col-right">
+        <div class="card">
+          <div class="ov-head">
+            <div class="card-label" style="margin:0">&Uuml;bersicht Kontingent</div>
+            <div class="seg" id="ovSeg">
+              <button data-scope="year" class="on">Jahr</button>
+              <button data-scope="month">Monat</button>
+            </div>
+          </div>
+          <div class="ov-grid" id="ovGrid"></div>
+          <div class="quota-bar"><div class="quota-fill" id="quotaFill"></div></div>
+          <div class="proj" id="ovProj"></div>
+          <div class="sapline" id="sapLine"></div>
+          <div class="cal" id="cal"></div>
+        </div>
+        </div><!-- /col-right -->
+        </div><!-- /main-grid -->
+      </div>
+
+      <!-- ======= EINSTELLUNGEN ======= -->
+      <div id="settingsView">
+        <div class="card">
+          <div class="card-label">Firmen-Regeln</div>
+          <div class="set-grid">
+            <div class="set-field">
+              <label class="set-label">B&uuml;ro-Mindestanteil (Kombitag-Schwelle)</label>
+              <div class="set-row"><input class="set-input" id="s_threshold" inputmode="numeric" style="width:90px"><span style="align-self:center;color:var(--muted);font-size:15px">%</span></div>
+              <span class="set-hint">Ab hier z&auml;hlt ein gemischter Tag als Kombitag statt Telearbeit.</span>
+            </div>
+            <div class="set-field">
+              <label class="set-label">Telearbeit-Kontingent pro Jahr</label>
+              <div class="set-row"><input class="set-input" id="s_quota" inputmode="numeric" style="width:90px"><span style="align-self:center;color:var(--muted);font-size:15px">Tage</span></div>
+              <span class="set-hint">Wie viele Telearbeitstage dir im Jahr zustehen.</span>
+            </div>
+            <div class="set-field">
+              <label class="set-label">Telearbeit-Kontingent pro Monat</label>
+              <div class="set-row"><input class="set-input" id="s_quotaMonthly" inputmode="numeric" style="width:90px"><span style="align-self:center;color:var(--muted);font-size:15px">Tage</span></div>
+              <span class="set-hint">Optional. 0 = kein Monatslimit (nur das Jahreslimit z&auml;hlt).</span>
+            </div>
+            <div class="set-field">
+              <label class="set-label">Sollzeit pro Tag</label>
+              <input class="set-input" id="s_soll" inputmode="numeric" placeholder="7:42">
+              <span class="set-hint">Netto-Arbeitszeit f&uuml;rs Gleitzeitkonto (Std:Min).</span>
+            </div>
+            <div class="set-field">
+              <label class="set-label">Normaltag-L&auml;nge</label>
+              <input class="set-input" id="s_normal" inputmode="numeric" placeholder="8:12">
+              <span class="set-hint">Anwesenheit brutto f&uuml;r &bdquo;Normaltag Ende&ldquo; (Std:Min).</span>
+            </div>
+            <div class="set-field">
+              <label class="set-label">Mittagspause</label>
+              <div class="set-row"><input class="set-input" id="s_lunch" inputmode="numeric" style="width:90px"><span style="align-self:center;color:var(--muted);font-size:15px">Min</span></div>
+              <span class="set-hint">Pflichtpause, wird ab 6 h Arbeit abgezogen.</span>
+            </div>
+            <div class="set-field">
+              <label class="set-label">Pausen-Fenster</label>
+              <div class="set-row"><input class="set-input" id="s_lwStart" inputmode="numeric" placeholder="10:00"><span style="align-self:center;color:var(--muted)">&ndash;</span><input class="set-input" id="s_lwEnd" inputmode="numeric" placeholder="14:00"></div>
+              <span class="set-hint">In diesem Fenster z&auml;hlen L&uuml;cken als Pause.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">SAP-Sync</div>
+          <div class="set-grid">
+            <div class="set-field full">
+              <label class="set-check"><input type="checkbox" id="s_live"> Live-Aktualisierung automatisch</label>
+              <span class="set-hint">Holt die SAP-Daten in einem Intervall automatisch neu (read-only).</span>
+            </div>
+            <div class="set-field">
+              <label class="set-label">Intervall</label>
+              <div class="set-row"><input class="set-input" id="s_liveMin" inputmode="numeric" style="width:90px"><span style="align-self:center;color:var(--muted);font-size:15px">Min</span></div>
+            </div>
+            <div class="set-field">
+              <label class="set-label">SAP-URL</label>
+              <input class="set-input sm" id="s_sapUrl" spellcheck="false">
+              <span class="set-hint">Virtuelles Terminal &mdash; nur &auml;ndern, wenn sich die Adresse &auml;ndert.</span>
+            </div>
+          </div>
+          <div class="set-actions">
+            <button class="btn-primary" id="saveSet">Speichern &amp; zur&uuml;ck</button>
+            <button class="btn-reset" id="resetSet">Standard</button>
+          </div>
+        </div>
+        <div class="note" style="margin-top:6px">SAP wird ausschlie&szlig;lich <b>gelesen</b>. Stempelaktionen l&ouml;st die Extension nie aus. &Auml;nderungen wirken sofort auf alle Tage.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" id="footNote">
+    SAP read-only &middot; Datum wechseln &middot; Bl&ouml;cke ziehen &middot; Regeln in &#9881;&#65039; einstellbar
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span></div>
+
+<script src="kombi.js"></script>
+</body>
+</html>
