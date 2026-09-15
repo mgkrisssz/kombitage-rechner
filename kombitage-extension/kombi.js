@@ -37,6 +37,17 @@ const clampSnap = m => Math.round(Math.min(Math.max(m, W_START), W_END));   // m
 const minToX = (m, w) => (m - W_START) * w / SPAN;
 const xToMin = (x, w) => W_START + x * SPAN / w;
 const parseHM = s => { const m = String(s).trim().match(/^(\d{1,2}):(\d{2})$/); if (!m) return null; const h = +m[1], mm = +m[2]; if (h > 23 || mm > 59) return null; return h * 60 + mm; };
+// Flexible Eingabe: "10:30", "1030", "930", "9" → Minuten. Erkennt fehlenden Doppelpunkt automatisch.
+const parseFlexHM = s => {
+  s = String(s).trim(); if (!s) return null;
+  const c = parseHM(s); if (c != null) return c;
+  const d = s.replace(/\D/g, ''); if (!d) return null;
+  let h, mm;
+  if (d.length <= 2) { h = +d; mm = 0; }
+  else if (d.length === 3) { h = +d.slice(0, 1); mm = +d.slice(1); }
+  else { h = +d.slice(0, 2); mm = +d.slice(2, 4); }
+  if (h > 23 || mm > 59) return null; return h * 60 + mm;
+};
 const fmtHM = m => pad(Math.floor(m / 60)) + ':' + pad(m % 60);
 const fmtCd = ms => { const t = Math.max(0, Math.ceil(ms / 1000)); return pad(Math.floor(t / 60)) + ':' + pad(t % 60); };
 const decH = h => (h < 0 ? '− ' : '') + Math.abs(h).toFixed(2).replace('.', ',') + ' h';   // Dezimalstunden mit Komma, wie SAP GLZ-Saldo
@@ -201,27 +212,24 @@ function openBlockEditor(track, oi) {
   host.querySelectorAll('.blk-editor').forEach(e => e.remove());
   const list = days[sel] || []; const b = list[oi]; if (!b) return;
   const w = track.clientWidth || 760;
-  const sorted = [...list].sort((a, z) => a.start - z.start); const pos = sorted.indexOf(b);
-  const prevEnd = pos > 0 ? sorted[pos - 1].end : W_START;
-  const nextStart = pos < sorted.length - 1 ? sorted[pos + 1].start : W_END;
   const ed = document.createElement('div');
   ed.className = 'blk-editor';
   ed.style.left = Math.min(Math.max(0, minToX(b.start, w) - 6), Math.max(0, w - 244)) + 'px';
   ed.innerHTML =
     '<div class="be-row"><label>Von</label><input class="be-in" id="beStart" inputmode="numeric" maxlength="5" value="' + toTime(b.start) + '">' +
     '<label>Bis</label><input class="be-in" id="beEnd" inputmode="numeric" maxlength="5" value="' + toTime(b.end) + '"></div>' +
-    '<div class="be-hint" id="beHint">Uhrzeit als HH:MM — minutengenau.</div>' +
+    '<div class="be-hint" id="beHint">Uhrzeit eingeben — „1030“ wird zu 10:30.</div>' +
     '<div class="be-actions"><button class="be-ok" id="beOk">Übernehmen</button><button class="be-cancel" id="beCancel">Abbrechen</button></div>';
   host.appendChild(ed);
   const inS = ed.querySelector('#beStart'), inE = ed.querySelector('#beEnd'), hint = ed.querySelector('#beHint');
   const close = () => ed.remove();
   const fail = msg => { hint.textContent = msg; hint.classList.add('err'); };
   const apply = () => {
-    const ns = parseHM(inS.value), ne = parseHM(inE.value);
-    if (ns == null || ne == null) return fail('Ungültige Uhrzeit — Format HH:MM.');
+    const ns = parseFlexHM(inS.value), ne = parseFlexHM(inE.value);
+    if (ns == null || ne == null) return fail('Ungültige Uhrzeit — z. B. 10:30 oder 1030.');
     if (ns < W_START || ne > W_END) return fail('Nur zwischen ' + toTime(W_START) + ' und ' + toTime(W_END) + '.');
     if (ne - ns < MIN_BLOCK) return fail('Block muss mind. ' + MIN_BLOCK + ' Min lang sein.');
-    if (ns < prevEnd || ne > nextStart) return fail('Überschneidet einen anderen Block.');
+    if (list.some((o, i) => i !== oi && ns < o.end && ne > o.start)) return fail('Überschneidet einen anderen Block.');
     b.start = ns; b.end = ne; b.open = false; b.source = 'MANUAL';
     saveDays(); close(); renderAll();
   };
@@ -230,6 +238,8 @@ function openBlockEditor(track, oi) {
   ed.addEventListener('pointerdown', e => e.stopPropagation());
   [inS, inE].forEach(inp => {
     inp.addEventListener('pointerdown', e => e.stopPropagation());
+    // Beim Verlassen automatisch zu HH:MM formatieren, damit man sieht, was erkannt wurde.
+    inp.addEventListener('blur', () => { const v = parseFlexHM(inp.value); if (v != null) inp.value = toTime(v); });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); apply(); } else if (e.key === 'Escape') close(); });
   });
   inS.focus(); inS.select();
@@ -429,9 +439,20 @@ function anchor() { const list = days[sel] || []; const s = [...list].sort((a, b
 function addBlock(loc) {
   if (!days[sel]) days[sel] = []; const list = days[sel];
   const defLen = loc === 'arzt' ? 60 : 90;
-  let s = anchor(); if (s >= W_END - 30) s = W_START; let e = Math.min(s + defLen, W_END);
-  list.forEach(b => { if (b.start < e && b.start >= s) e = b.start; });
-  if (e - s < 30) { s = W_START; e = W_START + 90; }
+  const sorted = [...list].sort((a, b) => a.start - b.start);
+  // 1) Erste echte Lücke ZWISCHEN zwei Blöcken bevorzugen (dort will man i. d. R. einfügen).
+  let cursor = W_START, slot = null;
+  for (const b of sorted) {
+    if (cursor > W_START && b.start - cursor >= MIN_BLOCK) { slot = { s: cursor, e: b.start }; break; }
+    cursor = Math.max(cursor, b.end);
+  }
+  // 2) Sonst hinten anhängen (bzw. leerer Tag am Fensteranfang).
+  if (!slot) {
+    let s = sorted.length ? cursor : W_START;
+    if (s >= W_END - MIN_BLOCK) s = W_START;
+    slot = { s, e: W_END };
+  }
+  const s = slot.s, e = Math.min(s + defLen, slot.e);
   list.push({ start: clampSnap(s), end: clampSnap(e), loc, open: false, source: 'MANUAL' });
   saveDays(); renderAll();
 }
