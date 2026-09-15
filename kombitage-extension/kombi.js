@@ -292,22 +292,32 @@ function renderPanelsFull(c) {
   let head;
   if (!hasWork) {
     head = '<div class="gz-val" style="color:var(--muted)">—</div><div class="panel-sub" style="color:var(--muted)">kein Eintrag</div>';
-  } else if (glzKnown) {
-    // Hochgerechneter Kontostand = offizieller SAP-Saldo + heutiger Beitrag
-    const projMin = Math.round(parseFloat(sapInfo.glz) * 60) + gz;
-    const col = projMin >= 0 ? 'var(--green)' : 'var(--red)';
-    head =
-      '<div class="gz-val" style="color:' + col + '">' + decH(projMin / 60) + '</div>' +
-      '<div class="gz-sub2 mono" style="color:' + col + '">' + durSigned(projMin) + '</div>' +
-      '<div class="panel-sub" style="color:' + col + '">' + (c.open ? 'wenn du jetzt aufhörst' : 'GLZ-Konto an dem Tag') + '</div>' +
-      '<div class="gz-today"><span>Beitrag heute</span><span class="mono" style="color:' + (gz >= 0 ? 'var(--green)' : 'var(--red)') + '">' + durSigned(gz) + '</span></div>';
   } else {
-    // Kein SAP-Saldo bekannt → nur den heutigen Beitrag zeigen
-    const col = gz >= 0 ? 'var(--green)' : (Math.abs(gz) < 60 ? 'var(--amber)' : 'var(--red)');
-    head =
-      '<div class="gz-val" style="color:' + col + '">' + durSigned(gz) + '</div>' +
-      '<div class="panel-sub" style="color:' + col + '">' + (c.open ? 'wenn du jetzt aufhörst · heute' : 'Beitrag an dem Tag') + '</div>' +
-      '<div class="panel-sub" style="color:var(--subtle)">SAP-Sync zeigt den Kontostand in h</div>';
+    // Links: heutiger Beitrag (wie bisher). Rechts: hochgerechneter Kontostand.
+    const lCol = gz >= 0 ? 'var(--green)' : (Math.abs(gz) < 60 ? 'var(--amber)' : 'var(--red)');
+    const leftSub = c.open
+      ? (gz >= 0 ? 'wenn du jetzt aufhörst · auf Konto' : 'wenn du jetzt aufhörst · vom Konto')
+      : (gz >= 0 ? 'an dem Tag aufs Konto' : 'an dem Tag vom Konto');
+    const left =
+      '<div class="gz-col">' +
+        '<div class="gz-val" style="color:' + lCol + '">' + (gz >= 0 ? '+ ' : '− ') + dur(Math.abs(gz)) + '</div>' +
+        '<div class="panel-sub" style="color:' + lCol + '">' + leftSub + '</div>' +
+      '</div>';
+    let right;
+    if (glzKnown) {
+      // Hochgerechneter Kontostand = offizieller SAP-Saldo + heutiger Beitrag
+      const projMin = Math.round(parseFloat(sapInfo.glz) * 60) + gz;
+      const rCol = projMin >= 0 ? 'var(--green)' : 'var(--red)';
+      right =
+        '<div class="gz-col gz-col-r">' +
+          '<div class="gz-val" style="color:' + rCol + '">' + decH(projMin / 60) + '</div>' +
+          '<div class="gz-sub2 mono" style="color:' + rCol + '">' + durSigned(projMin) + '</div>' +
+          '<div class="panel-sub" style="color:' + rCol + '">GLZ-Konto danach</div>' +
+        '</div>';
+    } else {
+      right = '<div class="gz-col gz-col-r"><div class="gz-hint">SAP-Sync zeigt hier den<br>hochgerechneten Kontostand</div></div>';
+    }
+    head = '<div class="gz-cols">' + left + right + '</div>';
   }
   gp.innerHTML = '<div class="panel-lbl" style="color:var(--muted)">Gleitzeitkonto ' + (c.open ? '<span class="live-dot"></span>' : '') + '</div>' + head + sapRow;
 }

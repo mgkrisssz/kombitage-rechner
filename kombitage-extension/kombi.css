@@ -198,11 +198,14 @@ body{background:var(--bg-glow);font-family:var(--font);color:var(--ink);line-hei
 .be-cancel{background:var(--card-2);border:1px solid var(--border-strong);color:var(--muted);border-radius:8px;padding:7px 11px;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:600}
 .be-cancel:hover{color:var(--ink);border-color:var(--ink)}
 
-/* ── GLZ-Panel: hochgerechneter Kontostand ── */
-.gz-sub2{font-family:var(--mono);font-size:13.5px;font-weight:600;margin-top:3px}
-.gz-today{display:flex;justify-content:space-between;align-items:baseline;margin-top:9px;padding-top:7px;
-  border-top:1px dashed var(--border);font-size:11px;font-weight:500;color:var(--muted)}
-.gz-saprow{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+/* ── GLZ-Panel: heutiger Beitrag (links) + hochgerechneter Kontostand (rechts) ── */
+.gz-cols{display:flex;gap:11px;align-items:flex-start}
+.gz-col{flex:1;min-width:0}
+.gz-col-r{border-left:1px solid var(--border);padding-left:11px}
+.gz-cols .gz-val{font-size:18px;white-space:nowrap}
+.gz-sub2{font-family:var(--mono);font-size:12.5px;font-weight:600;margin-top:2px}
+.gz-hint{font-size:11px;font-weight:500;line-height:1.4;color:var(--subtle)}
+.gz-saprow{display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:9px;border-top:1px solid var(--border)}
 .gz-saplbl{color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .gz-sapval{font-size:16px;font-weight:600}
 
