@@ -119,14 +119,14 @@ function calc(iso) {
     if (fin.loc === 'buro') {
       const minBuro = Math.max(Math.ceil(S.soll * S.threshold / 100), heim > 0 ? Math.ceil(heim * S.threshold / (100 - S.threshold)) : 0);
       const need = Math.max(0, minBuro - buro);
-      plan = { mode: 'buro', fruh: toTime(Math.max(fin.end, NOW) + need), need, normEnde: toTime(arr[0].start + S.normalDay + excess) };
+      plan = { mode: 'buro', fruh: toTime(Math.max(fin.end, NOW) + need), need, normEnde: toTime(arr[0].start + S.normalDay + excess), normEndeRaw: arr[0].start + S.normalDay + excess };
     } else if (buro > 0) {
       const rem = Math.max(0, Math.floor(buro * (100 - S.threshold) / S.threshold) - heim);
-      plan = { mode: 'heim', spat: toTime(NOW + rem), spatRaw: NOW + rem, rem, normEnde: toTime(arr[0].start + S.normalDay + excess) };
+      plan = { mode: 'heim', spat: toTime(NOW + rem), spatRaw: NOW + rem, rem, normEnde: toTime(arr[0].start + S.normalDay + excess), normEndeRaw: arr[0].start + S.normalDay + excess };
     } else {
       const nb = Math.ceil(S.soll * S.threshold / 100);
       const spatMin = arr[0].start + S.normalDay + excess - nb;
-      plan = { mode: 'heim0', spatBuro: toTime(spatMin), spatBuroRaw: spatMin, tooLate: NOW > spatMin, nb, normEnde: toTime(arr[0].start + S.normalDay + excess) };
+      plan = { mode: 'heim0', spatBuro: toTime(spatMin), spatBuroRaw: spatMin, tooLate: NOW > spatMin, nb, normEnde: toTime(arr[0].start + S.normalDay + excess), normEndeRaw: arr[0].start + S.normalDay + excess };
     }
   }
   return { arr, buro, heim, arzt, rawAnw, netto, inWPause, pauseFromWork, pct, isBuro, isKombi, klass, fin, open, gz, plan, excess };
@@ -144,6 +144,7 @@ function renderTrack() {
   if (!list.length) { const e = document.createElement('div'); e.className = 'tl-empty'; e.textContent = 'Noch leer — Block einfügen oder SAP Sync'; track.appendChild(e); }
   if (sel === TODAY && NOW >= W_START && NOW <= W_END) { const nl = document.createElement('div'); nl.className = 'now-line'; nl.style.left = minToX(NOW, w) + 'px'; track.appendChild(nl); }
   if (c.plan && c.plan.mode === 'buro' && c.plan.need > 0) { const t = Math.max(c.fin.end, NOW) + c.plan.need; if (t <= W_END) { const tl = document.createElement('div'); tl.className = 'target-line'; tl.dataset.label = 'Kombi ' + toTime(t) + ' · noch ' + dur(c.plan.need); tl.style.left = minToX(t, w) + 'px'; track.appendChild(tl); } }
+  if (c.plan && c.plan.normEndeRaw >= W_START && c.plan.normEndeRaw <= W_END) { const nl = document.createElement('div'); nl.className = 'normal-line'; nl.dataset.label = 'Normal ' + c.plan.normEnde; nl.style.left = minToX(c.plan.normEndeRaw, w) + 'px'; track.appendChild(nl); }
   if (c.plan && c.plan.mode === 'heim0' && c.plan.spatBuroRaw >= W_START && c.plan.spatBuroRaw <= W_END) { const dl = document.createElement('div'); dl.className = 'deadline-line'; dl.dataset.label = c.plan.tooLate ? 'Büro-Frist verpasst' : 'Spät. Büro ' + c.plan.spatBuro; dl.style.left = minToX(c.plan.spatBuroRaw, w) + 'px'; track.appendChild(dl); }
   if (c.plan && c.plan.mode === 'heim' && c.plan.rem > 0 && c.plan.spatRaw >= W_START && c.plan.spatRaw <= W_END) { const dl = document.createElement('div'); dl.className = 'deadline-line'; dl.dataset.label = 'Heim bis ' + c.plan.spat; dl.style.left = minToX(c.plan.spatRaw, w) + 'px'; track.appendChild(dl); }
   const idx = list.map((_, i) => i).sort((a, b) => list[a].start - list[b].start);
