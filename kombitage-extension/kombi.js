@@ -481,6 +481,7 @@ function runSap(auto) {
     return;
   }
   syncing = true; renderPill();
+  hint.onclick = null; hint.style.cursor = '';
   hint.textContent = 'SAP wird im Hintergrund gelesen …'; hint.className = 'tl-hint sap';
   function fail(msg) {
     btn.classList.add('err');
@@ -506,13 +507,16 @@ function runSap(auto) {
     sel = TODAY; renderAll();
     const teleTxt = sapInfo.teleConsumed != null ? ' · Telearbeit ' + sapInfo.teleConsumed + ' verbraucht (SAP)' : '';
     hint.textContent = 'SAP-Stand übernommen' + (warn.length ? ' · ' + warn.length + ' Hinweis(e)' : '') + teleTxt + ' · read-only.'; hint.className = 'tl-hint sap';
-    hint.title = warn.join('\n');
+    hint.onclick = null; hint.style.cursor = '';
     if (warn.length) {
       const list = document.createElement('div');
-      list.style.cssText = 'margin-top:4px;opacity:.85;font-size:.92em';
+      list.style.cssText = 'margin-top:4px;opacity:.85;font-size:.92em;display:none';
       warn.forEach(w => { const d = document.createElement('div'); d.textContent = '• ' + w; list.appendChild(d); });
       hint.appendChild(list);
-    }
+      hint.style.cursor = 'pointer';
+      hint.title = 'Klicken, um die Hinweise ein-/auszuklappen';
+      hint.onclick = () => { list.style.display = list.style.display === 'none' ? 'block' : 'none'; };
+    } else hint.title = '';
     toast('SAP gelesen · ' + n + ' Tag' + (n === 1 ? '' : 'e') + (sapInfo.teleConsumed != null ? ' · ' + sapInfo.teleConsumed + ' Telearbeit verbraucht' : '') + ' (read-only)');
     renderPill(); schedule();
   });
