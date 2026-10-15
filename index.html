@@ -75,6 +75,8 @@ body.dark { background: #111009; }
 .stat.active-blue  { background:var(--blue-bg);  border-color:var(--blue-border); }
 .stat-lbl { font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; display:flex; align-items:center; gap:4px; }
 .stat-val { font-family:var(--mono); font-size:18px; font-weight:600; }
+.stat-row { display:flex; justify-content:space-between; align-items:baseline; gap:6px; }
+.stat-dec { font-family:var(--mono); font-size:12px; color:var(--subtle); white-space:nowrap; }
 .stat-pct { font-size:11px; color:var(--subtle); margin-top:3px; }
 .live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; flex-shrink:0; }
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
@@ -237,6 +239,8 @@ function buildLiveStatus(c){
   </div>`;
 }
 
+function decH(min){if(min==null||isNaN(min))return '';return (Math.round(Math.max(0,min))/60).toFixed(2).replace('.',',')+' h';}
+function statVal(min,col){return `<div class="stat-row"><div class="stat-val" style="color:${col};">${dur(min)}</div><div class="stat-dec">${decH(min)}</div></div>`;}
 function durGZ(min){
   const sign=min>=0?'+':'−';
   const abs=Math.abs(Math.round(min));
@@ -274,22 +278,22 @@ function buildResults(c){
   const stats=`<div class="stats" style="grid-template-columns:repeat(4,1fr);">
     <div class="stat ${bA?'active-amber':''}">
       <div class="stat-lbl" style="color:${bA?'var(--amber)':'var(--muted)'};">${bIco(bA?'var(--amber)':'var(--muted)')} Büro${bA?'<span class="live-dot"></span>':''}</div>
-      <div class="stat-val" style="color:var(--amber);">${dur(c.buro)}</div>
+      ${statVal(c.buro,'var(--amber)')}
       ${pctFmt?`<div class="stat-pct" style="color:${bA?'var(--amber)':'var(--subtle)'};">${pctFmt}</div>`:''}
     </div>
     <div class="stat ${hA?'active-blue':''}">
       <div class="stat-lbl" style="color:${hA?'var(--blue)':'var(--muted)'};">${hIco(hA?'var(--blue)':'var(--muted)')} Heim${hA?'<span class="live-dot"></span>':''}</div>
-      <div class="stat-val" style="color:var(--blue);">${dur(c.heim)}</div>
+      ${statVal(c.heim,'var(--blue)')}
       ${pctFmt&&!c.isBurotag?`<div class="stat-pct" style="color:${hA?'var(--blue)':'var(--subtle)'};">${(100-c.pct).toFixed(1)}%</div>`:''}
     </div>
     <div class="stat">
       <div class="stat-lbl" style="color:var(--muted);">${!c.hasEnd?`<span class="live-dot"></span> Live ${toTime(c.liveNow)}`:'Anwesenheit'}</div>
-      <div class="stat-val" style="color:var(--text);">${dur(c.rawAnw)}</div>
+      ${statVal(c.rawAnw,'var(--text)')}
       ${c.hasEnd?'':`<div class="stat-pct">Anwesenheit</div>`}
     </div>
     <div class="stat">
       <div class="stat-lbl" style="color:var(--muted);">Nettoarbeitszeit</div>
-      <div class="stat-val" style="color:var(--green);">${dur(c.nettoAZ)}</div>
+      ${statVal(c.nettoAZ,'var(--green)')}
       <div class="stat-pct">${totalPause>0?`− ${totalPause} Min Pause`:'ohne Pause'}</div>
     </div>
   </div>`;
