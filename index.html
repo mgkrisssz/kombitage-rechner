@@ -11,7 +11,9 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { background: #f2efe9; transition: background .3s; }
+body { min-height: 100vh; }
 body.dark { background: #111009; }
+html:has(body.dark) { background: #111009; }
 
 .shell {
   --bg:#f2efe9; --card:#ffffff; --border:#ddd8d0; --border-strong:#c8c2b8;
