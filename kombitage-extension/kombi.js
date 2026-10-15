@@ -51,6 +51,7 @@ const parseFlexHM = s => {
 const fmtHM = m => pad(Math.floor(m / 60)) + ':' + pad(m % 60);
 const fmtCd = ms => { const t = Math.max(0, Math.ceil(ms / 1000)); return pad(Math.floor(t / 60)) + ':' + pad(t % 60); };
 const decH = h => (h < 0 ? '− ' : '') + Math.abs(h).toFixed(2).replace('.', ',') + ' h';   // Dezimalstunden mit Komma, wie SAP GLZ-Saldo
+const statVal = (m, style) => '<div class="stat-row"><div class="stat-val"' + (style ? ' style="' + style + '"' : '') + '>' + dur(m) + '</div><div class="stat-dec">' + (m == null || isNaN(m) ? '' : decH(Math.max(0, Math.round(m)) / 60)) + '</div></div>';
 const durSigned = m => (m < 0 ? '− ' : '') + dur(Math.abs(m));                                // Std/Min mit Vorzeichen
 
 /* ── Datum ── */
@@ -263,10 +264,10 @@ function renderStats(c) {
   const pctFmt = c.pct != null ? c.pct.toFixed(1) + '%' : '—';
   const totalPause = c.inWPause + c.pauseFromWork;
   $('stats').innerHTML =
-    '<div class="stat ' + (bA ? 'on-amber' : '') + '"><div class="stat-lbl" style="color:' + (bA ? 'var(--amber)' : 'var(--muted)') + '">🏢 Büro ' + (bA ? '<span class="live-dot"></span>' : '') + '</div><div class="stat-val" style="color:var(--amber)">' + dur(c.buro) + '</div><div class="stat-pct">' + (c.pct != null ? pctFmt : '&nbsp;') + '</div></div>' +
-    '<div class="stat ' + (hA ? 'on-blue' : '') + '"><div class="stat-lbl" style="color:' + (hA ? 'var(--blue)' : 'var(--muted)') + '">🏠 Heim ' + (hA ? '<span class="live-dot"></span>' : '') + '</div><div class="stat-val" style="color:var(--blue)">' + dur(c.heim) + '</div><div class="stat-pct">' + (c.pct != null && !c.isBuro ? (100 - c.pct).toFixed(1) + '%' : '&nbsp;') + '</div></div>' +
-    '<div class="stat"><div class="stat-lbl">' + (c.open ? '<span class="live-dot"></span> Live ' + toTime(NOW) : 'Anwesenheit') + '</div><div class="stat-val">' + dur(c.rawAnw) + '</div><div class="stat-pct">' + (c.arzt > 0 ? 'inkl. 🩺 ' + dur(c.arzt) : 'Anwesenheit') + '</div></div>' +
-    '<div class="stat"><div class="stat-lbl">Nettoarbeitszeit</div><div class="stat-val" style="color:var(--green)">' + dur(c.netto) + '</div><div class="stat-pct">' + (totalPause > 0 ? '− ' + totalPause + ' Min Pause' : 'ohne Pause') + '</div></div>';
+    '<div class="stat ' + (bA ? 'on-amber' : '') + '"><div class="stat-lbl" style="color:' + (bA ? 'var(--amber)' : 'var(--muted)') + '">🏢 Büro ' + (bA ? '<span class="live-dot"></span>' : '') + '</div>' + statVal(c.buro,'color:var(--amber)') + '<div class="stat-pct">' + (c.pct != null ? pctFmt : '&nbsp;') + '</div></div>' +
+    '<div class="stat ' + (hA ? 'on-blue' : '') + '"><div class="stat-lbl" style="color:' + (hA ? 'var(--blue)' : 'var(--muted)') + '">🏠 Heim ' + (hA ? '<span class="live-dot"></span>' : '') + '</div>' + statVal(c.heim,'color:var(--blue)') + '<div class="stat-pct">' + (c.pct != null && !c.isBuro ? (100 - c.pct).toFixed(1) + '%' : '&nbsp;') + '</div></div>' +
+    '<div class="stat"><div class="stat-lbl">' + (c.open ? '<span class="live-dot"></span> Live ' + toTime(NOW) : 'Anwesenheit') + '</div>' + statVal(c.rawAnw,'') + '<div class="stat-pct">' + (c.arzt > 0 ? 'inkl. 🩺 ' + dur(c.arzt) : 'Anwesenheit') + '</div></div>' +
+    '<div class="stat"><div class="stat-lbl">Nettoarbeitszeit</div>' + statVal(c.netto,'color:var(--green)') + '<div class="stat-pct">' + (totalPause > 0 ? '− ' + totalPause + ' Min Pause' : 'ohne Pause') + '</div></div>';
 }
 function renderBar(c) {
   const pct = c.pct != null ? Math.min(100, c.pct) : 0;

@@ -220,6 +220,8 @@ body{background:var(--bg-glow);font-family:var(--font);color:var(--ink);line-hei
 .stat.on-blue{background:var(--blue-bg);border-color:var(--blue-border)}
 .stat-lbl{font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:4px;color:var(--muted)}
 .stat-val{font-family:var(--mono);font-size:17px;font-weight:600}
+.stat-row{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.stat-dec{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text);opacity:.75;white-space:nowrap}
 .stat-pct{font-size:10.5px;color:var(--subtle);margin-top:3px;font-family:var(--mono)}
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green-border);animation:pulse 2s infinite;display:inline-block}
 
